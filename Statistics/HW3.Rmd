@@ -1,0 +1,91 @@
+---
+title: "HW3_Markdown"
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r}
+library(dplyr)
+library(ggplot2)
+
+SID <- c(3,0,3,1,8,7,6,8,8,8)
+population <- data.frame(SID)
+
+
+#plot histogram.
+population %>% ggplot(aes(x=SID,y=..density..)) + 
+  geom_histogram(binwidth = 1)
+
+#find mean and standard deviation.
+mu <- mean(population$SID)
+sigma <- sd(population$SID)
+
+#take sample of size n=400. Find its mean and standard error. 
+N = length(population$SID)
+n = 400
+vec <- sample(population$SID, n, replace=TRUE)
+sample_mean <- mean(vec)
+sample_mean
+standard_error <- sigma / sqrt(n)
+standard_error
+
+
+#plot normal with sample mean and standard error.
+plot_normal <- ggplot(data=data.frame(x=c(-1,10)), aes(x)) +
+              stat_function(fun=dnorm, n=101, args=list(mean=sample_mean, sd=standard_error)) +
+              scale_y_continuous(breaks=NULL)
+plot_normal
+
+#take 100 samples of size n=400. Find the mean for each.
+find_avg <- function(){
+  resample <- sample(population$SID, size = 400, replace = T)
+  xbar <- mean(resample)
+  xbar
+}
+
+means <- replicate(100, find_avg())
+
+#plot histogram of all sample means.
+data_means <- data.frame(means)
+data_means %>% ggplot(aes(means)) + 
+               geom_histogram(aes(y=..density..), binwidth = 0.1) + 
+               stat_function(fun=dnorm, n=101, args=list(mean=sample_mean, sd=standard_error)) + 
+               scale_y_continuous(breaks=NULL)
+
+#construct confidence interval 
+alpha = 0.05
+a <- quantile(means, alpha/2)
+b <- quantile(means, 1 - alpha/2)
+CI <- c(a, b)
+CI
+
+#count number of means in CI 
+count <- 0
+for(mean in means) {
+  if (mean >= a & mean <= b) {
+    count <- count + 1
+  }
+}
+num_invtervals = count
+num_invtervals
+
+#draw histogram for binomial n=100, p=0.95
+p = 0.95
+n_binom = 100
+data_binomial = rbinom(p=0.95, 100, n=100)
+
+plot_binomial <- ggplot()+
+  aes(x=data_binomial)+
+  geom_bar(width = 0.2) +
+  geom_vline(xintercept = num_invtervals)
+
+plot_binomial
+
+#Find E(G) and SE(G)
+E_G = n_binom*p
+E_G
+standard_error_binom = sqrt(p * n_binom * (1 - p))
+standard_error_binom
+
+#this is not surprissing given that my estimates of 93 is less than 1 standard deviation from E(G)
+```

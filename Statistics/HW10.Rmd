@@ -1,0 +1,405 @@
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+<b>Problem 10A</b>
+
+a)
+
+Standard regression model is ${cw}_i = + {\beta}_0 + \beta_1{el}_i + {\epsilon}_i$
+
+```{r}
+chicks <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW10/chicks-1.txt", header=TRUE)
+head(chicks)
+
+chicks_scatter <- ggplot(chicks, aes(x=el, y=cw)) + geom_point() + ylab('Chick Weight') + 
+  xlab('Egg Length') 
+chicks_scatter
+```
+
+From plot above it seems that model assumptions are resonablly satisfied. That is, the data seems to follow a linear trend, and there is no of evident signs of heteroscedasticity or of correlation between the error terms. 
+
+```{r}
+mean_cw <- mean(chicks$cw)
+sd_cw <- sd(chicks$cw)
+mean_el <- mean(chicks$el)
+sd_el <- sd(chicks$el)
+corr_cw_el = cor(chicks$cw, chicks$el)
+mean_cw; sd_cw
+mean_el; sd_el
+corr_cw_el
+beta_hat <- corr_cw_el * (sd_cw / sd_el)
+beta_hat
+a_hat <- mean_cw - beta_hat * mean_el
+a_hat
+```
+
+The estimated slope is 0.252 (grams) and the estimated intercept is -1.77 (grams). Hence, the estimated equation is $\hat{cw} = - 1.77 + 0.252el$.
+
+```{r}
+f <- function(x) -1.77 + 0.252*x 
+chicks_scatter + stat_function(fun=f, colour="red") 
+```
+
+b)
+
+```{r}
+reg1 <- lm(cw ~ el, data = chicks)
+summary(reg1)
+```
+
+As per the manual results in part (a), R calculates an intercept of -1.77 and a slope of 0.252. The tests performed by R are specified below. 
+
+Test concerning the reported F-statistic: <br/>
+-Null: ${\beta}_1 = 0$<br/>
+-Alternative: ${\beta}_1 \neq 0$<br/>
+-Conclusion: given the p-value of $4.73*10^{-7}$, the null hypothesis can be rejected at any significance level. 
+
+Test concerning the reported t-statistic for the intercept:<br/>
+-Null: ${\beta}_0 = 0$<br/>
+-Alternative: ${\beta}_0 \neq 0$<br/>
+-Conclusion: given the p-value of 0.191, the null hypothesis cannot be rejected at the 10% significance level. 
+
+Test concerning the reported t-statistic for the slope:<br/>
+-Null: ${\beta}_1 = 0$<br/>
+-Alternative: ${\beta}_1 \neq 0$<br/>
+-Conclusion: given the p-value of $4.73*10^{-7}$, the null hypothesis can be rejected at any significance level. 
+
+
+c)
+
+```{r}
+corr_cw_eb = cor(chicks$cw, chicks$eb)
+corr_cw_ew = cor(chicks$cw, chicks$ew)
+corr_cw_el; corr_cw_eb; corr_cw_ew
+```
+
+Egg Weight is most correlated with Chick Weight out of the variables Egg Weight, Egg Length, and Egg Breadth. 
+
+```{r}
+ew_cw_scatter <- ggplot(chicks, aes(x=ew, y=cw)) + geom_point() + geom_smooth(method = "lm") +
+  ylab('Chick Weight') + xlab('Egg Weight')
+ew_cw_scatter
+
+reg2 <- lm(cw ~ ew, data = chicks)
+summary(reg2)
+
+ew_cw_resplot <- ggplot(reg2) + geom_point(aes(x = ew, y = .resid)) + 
+  geom_hline(aes(yintercept = 0), colour = 'red')
+ew_cw_resplot 
+```
+
+From the residual plot above it seems that the positive and negative residuals have roughly similar variance. Moreover, the residuals do not follow any obvious trends and do seem to be random, though concentrated around the range 8-9. 
+
+d) 
+
+```{r}
+n <- nrow(chicks)
+X <- chicks$ew
+
+x_i <- 8.5
+yhat_i<- reg2$coefficients[1] + reg2$coefficients[2] * x_i
+SEhat_yhat_i <- sigma(reg2)*sqrt((1/n) + ((x_i - mean(X))**2)/(n*var(X)))
+CId_0 <- yhat_i - qt(0.975, df = n - 2)*SEhat_yhat_i
+CId_1 <- yhat_i + qt(0.975, df = n - 2)*SEhat_yhat_i
+
+CId_0; CId_1
+```
+
+e)
+
+```{r}
+x_nplus1 <- 8.5
+yhat_predicted <- reg2$coefficients[1] + reg2$coefficients[2] * x_nplus1
+SEhat_yhat_predicted <- sigma(reg2)*sqrt(1 + (1/n) + ((x_nplus1 - mean(X))**2)/(n*var(X)))
+PIe_0 <- yhat_predicted - qt(0.975, df = n - 2)*SEhat_yhat_predicted
+PIe_1 <- yhat_predicted + qt(0.975, df = n - 2)*SEhat_yhat_predicted
+
+PIe_0; PIe_1
+```
+
+
+f)
+
+Parts (d) and (e) are repeated below using an egg weight of 12 grams. 
+
+First, we construct a 95% CI for the mean weight of Snowy Plover chicks that hatch from eggs weighing 12 grams.
+
+```{r}
+x_i_f <- 12
+yhat_i_f <- reg2$coefficients[1] + reg2$coefficients[2] * x_i
+SEhat_yhat_i_f <- sigma(reg2)*sqrt((1/n) + ((x_i_f - mean(X))**2)/(n*var(X)))
+CIf_0 <- yhat_i - qt(0.975, df = n - 2)*SEhat_yhat_i_f
+CIf_1 <- yhat_i + qt(0.975, df = n - 2)*SEhat_yhat_i_f
+
+CIf_0;CIf_1
+```
+
+Now, construct a 95% prediction interval for weight of chick that will hatch from a given egg weighing 12 grams.
+
+```{r}
+x_nplus2 <- 12
+yhat_xplus2_predicted <- reg2$coefficients[1] + reg2$coefficients[2] * x_nplus2
+SEhat_yhat_xplus2_predicted <- sigma(reg2)*sqrt(1 + (1/n) + ((x_nplus2 - mean(X))**2)/(n*var(X)))
+PIf_0 <- c(yhat_xplus2_predicted - qt(0.975, df = n - 2)*SEhat_yhat_xplus2_predicted)
+PIf_1 <- yhat_xplus2_predicted + qt(0.975, df = n - 2)*SEhat_yhat_xplus2_predicted
+
+PIf_0; PIf_1
+```
+
+<b>Problem 10B</b>
+
+a)
+
+```{r}
+reg3 <- lm(cw ~ el + eb, data=chicks)
+summary(reg3)
+```
+
+The regression above has an adjusted r-squared of 0.6972. This is somewhat worse than the 0.7111  from the previous regression. 
+
+b)
+
+```{r}
+reg4 <- lm(ew ~ el + eb, data=chicks)
+summary(reg4)
+```
+
+The regression above has an adjusted r-squared of 0.9482, a noticeable improvement over the 0.6972 over the previous regression. 
+
+c)
+
+```{r}
+reg5 <- lm(cw ~ el + eb + ew, data=chicks)
+summary(reg5)
+```
+
+The F-statistic has a very small p-value of $2.903*10^{-11}$. However, none of the t-statistics has a p-value smaller than 0.18. We can therefore reject the null that all coefficients are equal to zero. However, we cannot reject the null that any one particular coefficient is equal to zero.
+
+
+d) 
+
+```{r}
+reg6 <- lm(cw ~ el + eb + ew, data=chicks)
+reg6_adj.r.sqrd <- summary(reg6)$adj.r.squared
+reg7 <- lm(cw ~ el + eb, data=chicks)
+reg7_adj.r.sqrd <- summary(reg7)$adj.r.squared
+reg8 <- lm(cw ~ eb + ew, data=chicks)
+reg8_adj.r.sqrd <- summary(reg6)$adj.r.squared
+reg9 <- lm(cw ~ el + ew, data=chicks)
+reg9_adj.r.sqrd <- summary(reg8)$adj.r.squared
+reg10 <- lm(cw ~ el, data=chicks)
+reg10_adj.r.sqrd <- summary(reg10)$adj.r.squared
+reg11 <- lm(cw ~ eb, data=chicks)
+reg11_adj.r.sqrd <- summary(reg11)$adj.r.squared
+reg12 <- lm(cw ~ ew, data=chicks)
+reg12_adj.r.sqrd <- summary(reg12)$adj.r.squared
+
+reg6_adj.r.sqrd; reg7_adj.r.sqrd; reg8_adj.r.sqrd; reg9_adj.r.sqrd; reg10_adj.r.sqrd; reg11_adj.r.sqrd; reg12_adj.r.sqrd
+```
+
+Of the seven regressor combinations above, the one involving only Egg Weight has the highest adjusted r squared value of 0.711. Similarly, those regressions which do not include ew as a regressor have noticeably worse adjusted r squared values. Thus, it seems that Egg Weight explains most of the variation in chick weight
+
+<b>Problem 10C</b>
+
+a) 
+
+```{r}
+tox <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW10/tox.txt", header=TRUE)
+tox$change <- (tox$month15) - (tox$base)
+head(tox)
+```
+
+We are interested in whether the treatment is toxic in the short term (ie: after 15 weeks). Thus, we first perform a (parametric) paired t-test and then a non-parametric Wilcoxon signed rank test. We must use paired tests since the week 15 lung score is clearly not independent from from the original lung score. 
+
+```{r}
+t.test(tox$base, tox$month15, alternative = c("greater"), paired = T)
+wilcox.test(tox$base, tox$month15, paired = T, correct = T)
+```
+
+
+Parametric test (paired t-test)<br/>
+-Null: the true mean is the same before treatment and fifteen weeks after treatment.<br/>
+-Alternative: the true mean before treatment is greater than the true mean after treatment.<br/>
+-Conlusion: the parametric test results in a p-value of $2.084*10^{-6}$. Thus, we can reject the null at any significance level.
+
+Non-parametric test (Wilcoxon signed rank test)<br/>
+-Null: The distribution the pre and post treatment difference is symmetric around zero.<br/>
+-Alternative: The distribution the pre and post treatment difference is not symmetric around zero.<br/>
+-Conclusion: the non-parametric test results in a p-value of $9.064*10^{-6}$. Thus, we can reject the null at any significance level.
+
+
+b) 
+
+```{r}
+cor(tox[c('month15', 'height', 'rad', 'chemo', 'base')])
+```
+
+From the correlation matrix above, it seems that height, chemo, and base are all noticeably correlated with month15. Hemce, these should be used as predictors of a patients score 15 months after treatment.
+
+
+<b>Problem 10D</b>
+
+a)
+
+```{r}
+baby <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW10/baby.txt", header=TRUE)
+head(baby)
+
+ggplot(baby, aes(x=bw, y= ..density..)) + geom_histogram(bins = 15)
+ggplot(baby, aes(sample=baby$bw)) + stat_qq(size = 2)
+```
+
+The data looks roughly normally distributed, according to the histogram and qqplot above. 
+
+
+b)
+
+```{r}
+ggplot(baby, aes(x=mpw, y= ..density..)) + geom_histogram(bins = 17)
+ggplot(baby, aes(sample=baby$mpw)) + stat_qq(size = 2)
+```
+
+The convexity of the upwards sloping qqplot above corresponds to the skewness of the distribution of mother pregnancy weights. If the skewness were in the opposite direction the qqplot would instead be concave.  
+
+
+c) 
+
+```{r}
+cor(baby)
+```
+
+The variables gestation days, mother's height, mother's pregnancy weight, and the cigarette smoking indicator should be used as predictors for birthweight since, from the correlation matrix above, they are all noticeably correlated with child brith weight. 
+
+
+d)
+
+```{r}
+reg10D <- lm(bw ~ gd  + mh + mpw + sm,data = baby)
+summary(reg10D)
+```
+
+The coefficint of sm, the preganancy smoking indicator, is -8.35. Thus, smoking during pregnancy reduces the birth weight of a pregnant mother's child by, on average, 8.35 ounces. This result is statistially significant at any significance level, given its p-value of $2*10^{-16}$ for the coefficient's t-test and the p-value for the joint hypothesis F-test is also extreamely small. 
+
+
+<b>Problem 10E</b>
+
+a)
+
+```{r}
+women <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW10/women.txt", header=TRUE)
+head(women)
+
+reg10E <- lm(avew ~ h, data = women)
+summary(reg10E)
+```
+
+The regression above has a very large R value of sqrt(0.991) = 0.995. This suggests that women's height can explain a considerable amount of the variation in women's weight. Indeed, this result is statistially significant at any significance level, given its p-value of $1.09*10^{-14}$ for the coefficient t-test. Likewise, the p-value for the joint hypothesis F-test is also extreamely small. 
+
+
+b)
+
+I believe that disaggregating the data above from national averages to the individual level would likely decrease the correlation reported above. Indeed, there should be far more variation among the women of equal heights when considered individually than when averaged nationally.
+
+
+c) 
+
+```{r}
+ggplot(women, aes(x=h, y= avew)) + geom_point() + geom_smooth(method = "lm", formula = y ~ x + I(x^2)) 
+
+women$avew.sqrd <- (women$avew)**2
+
+reg10E_2 <- lm(h ~ avew + avew.sqrd, data = women)
+summary(reg10E_2)
+```
+
+The choice of a quadratic polynomial model is natural given that, graphically, the equation $y = x + x^2$ provides an almost perfect fit for the sample data (and better fit than either $x$ or $x^2$ alone). Indeed, the regression with the avew term as well as the quadratic term avew.sqrd has a very large adjusted r-squared value of 0.997. Moreover, both coefficients, as well as the intercept term, are statistically significant at any significance level.
+
+
+<b>Problem 10F</b>
+
+a) 
+
+```{r}
+bodytemp <- read.csv("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW10/bodytemp.csv", header=TRUE)
+head(bodytemp)
+males.data <- bodytemp[bodytemp$gender == 1,]
+females.data <- bodytemp[bodytemp$gender == 2,]
+
+male.scatter <- ggplot(males.data, aes(x=temperature, y=rate)) + geom_point()
+female.scatter <- ggplot(females.data, aes(x=temperature, y=rate)) + geom_point()
+male.scatter
+female.scatter
+```
+
+There seems to be almost no relationship between heart rate and body temperature for females, and only a very noisy and unclear one for males.   
+
+
+b) 
+
+The relationship between heart rate and body temperature, weak as it may be, seems to be different for males and females, as indicated by the graphs above.
+
+
+c) 
+
+```{r}
+reg10F.males <- lm(rate ~ temperature, data = males.data)
+summary(reg10F.males)
+
+resplot.males <- ggplot(reg10F.males, aes(x = temperature, y = .resid)) + geom_point() + 
+  geom_smooth(method = "lm", color = 'blue')
+resplot.males
+```
+
+The estimated slope for males is 1.645 with a standard error of 1.039. From the residual plot above, the error terms seem to be generally random, and are certainly not linear with respect to temperature. 
+
+
+d) 
+
+```{r}
+reg10F.females <- lm(rate ~ temperature, data = females.data)
+summary(reg10F.females)
+
+resplot.females <- ggplot(reg10F.females, aes(x = temperature, y = .resid)) + geom_point() + 
+  geom_smooth(method = "lm", color = 'red')
+resplot.females
+```
+
+The estimated slope for females is 3.128 with a standard error of 1.316. From the residual plot above, the error terms seem to be generally random, and are certainly not linear with respect to temperature. 
+
+
+e) 
+
+```{r}
+slope.diff <- coef(reg10F.males)[2] - coef(reg10F.females)[2]
+SE_.slope.males <- coef(summary(reg10F.males))[2, "Std. Error"]
+SE_.slope.females <- coef(summary(reg10F.females))[2, "Std. Error"]
+SE_slope.diff <- sqrt((SE_.slope.males)**2 + (SE_.slope.females)**2)
+
+test_stat.slope <- slope.diff/SE_slope.diff
+pval.slope <- 2*pnorm(-abs(test_stat.slope))
+pval.slope
+```
+
+Since the p-value is 0.376, the null hypothesis that slopes are equal for males and females cannot be rejected. 
+
+
+f)
+
+```{r}
+intercept.diff <- coef(reg10F.males)[1] - coef(reg10F.females)[2]
+SE_.intercept.males <- coef(summary(reg10F.males))[1, "Std. Error"]
+SE_.intercept.females <- coef(summary(reg10F.females))[1, "Std. Error"]
+SE_intercept.diff <- sqrt((SE_.intercept.males)**2 + (SE_.intercept.females)**2)
+
+test_stat.intercept <- intercept.diff/SE_intercept.diff
+pval.intercept <- 2*pnorm(-abs(test_stat.intercept))
+pval.intercept
+```
+
+Since the p-value is 0.580, the null hypothesis that the intercepts are equal for males and females cannot be rejected.
+
+

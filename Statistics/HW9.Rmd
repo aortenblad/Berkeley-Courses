@@ -1,0 +1,79 @@
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+
+Problem 9A
+
+```{r} 
+
+Isofluorane <- c(.28, .51, 1.00, .39, .29, .36, .32, .69, .17, .33)
+Halothane <- c(.30, .39, .63, .68, .38, .21, .88, .39, .51, .32)
+Cyclopropane <- c(1.07, 1.35, .69, .28, 1.24, 1.53, .49, .56, 1.02, .3)
+
+groups <- c(rep("T1", 10), rep("T2", 10), rep("T3", 10))
+treatments <- c(Isofluorane, Halothane, Cyclopropane)
+problem_9A_data_tidy <- data.frame(groups, treatments)
+problem_9A_data_tidy
+
+qqnorm(Isofluorane)
+qqnorm(Halothane)
+qqnorm(Cyclopropane)
+
+problem_9A_data_tidy %>% ggplot(aes(x=groups, y=treatments)) + geom_boxplot()
+
+oneway.test(treatments~groups)
+
+kruskal.test(treatments~as.factor(groups))
+
+```
+
+
+From the qqnorm plots, only the treatment with Cyclopropane seems roughly normal. Fom the box plot it seems quite clear that the equal variance assumption does not hold for the data. Both the parametric and nonparametric tests have p-values greater than 0.05. Thus we fail to reject null hypothesis that the data all has the same mean for both the cases. 
+
+
+Problem 9B
+
+```{r} 
+
+C57 <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW9/c57.txt")
+AJ <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW9/aj.txt")
+F2 <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/HW9/f2.txt")
+
+groups_9B <- c(rep(1, 53), rep(2, 53), rep(3, 28))
+treatments_9B <- c(C57$V1, AJ$V1, F2$V1)
+problem_9B_data_tidy <- data.frame(groups_9B, treatments_9B)
+problem_9B_data_tidy
+
+oneway.test(treatments_9B~groups_9B)
+
+```
+
+
+The parametric test has p-value considerably smaller than 0.05. Thus we can reject the null hypothesis at any significance level. 
+
+Problem 9C
+
+```{r} 
+
+Type_1 <- c(1.7, 1.9, 6.1, 12.5, 16.5, 25.1, 30.5, 42.1, 82.5)
+Type_2 <- c(13.6, 19.8, 25.2, 46.2, 46.2, 61.1)
+Type_3 <- c(13.4, 20.9, 25.1, 29.7, 46.9)
+
+groups_9C <- c(rep(1, 9), rep(2, 6), rep(3, 5))
+treatments_9C <- c(Type_1, Type_2, Type_3)
+problem_9C_data_tidy <- data.frame(groups_9C, treatments_9C)
+problem_9C_data_tidy
+
+oneway.test(treatments_9C~groups_9C)
+
+kruskal.test(treatments_9C~groups_9C)
+
+```
+
+The parametric test has p-value greater than 0.05. Thus, we fail to reject null hypothesis (at the 5% significance level) that the data comes from the same distribution. The nonparametric test has a p-value smaller than 0.05. Thus we reject the null(at the 5% significance level) that each treatment has the same distribution.
+
+
