@@ -1,0 +1,87 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+```{r}
+library(ggplot2)
+```
+
+Problem 7A
+```{r}
+for_problem_A <- c(1997, 906, 904, 32)
+problem_A.matrix <- matrix(for_problem_A, nrow = 1, ncol = 4, byrow = TRUE)
+chisq.test(problem_A.matrix, correct = FALSE)
+```
+
+Problem 7B
+```{r}
+males = c(3755, 3251, 3777, 3706, 3717, 3660, 3669, 3626, 3481, 3590, 3605, 3392)
+exp_males = rep(3602.42, 12)
+test_males = sum(((males - exp_males)**2)/exp_males)
+test_males
+
+females = c(1362, 1244, 1496, 1452, 1448, 1376, 1370, 1301, 1337, 1351, 1416, 1226)
+exp_females = rep(1364.92, 12)
+test_females = sum(((females - exp_females)**2)/exp_females)
+
+qchisq(0.95, 10)
+```
+
+Problem 7C
+```{r}
+#a)
+for_problem_C <- c(790 , 98 , 209 , 56 , 11 , 27, 21 , 7 , 12)
+problem_c.matrix <- matrix(for_problem_C, nrow = 3, ncol = 3, byrow = TRUE)
+chisq.test(problem_c.matrix, correct = FALSE)
+
+#b)
+chisq.test(problem_c.matrix, correct = FALSE)$expected
+```
+
+Problem 7D
+```{r}
+problem_7D_expected = chisq.test(problem_c.matrix, correct = FALSE)$expected
+first_result = sum(((problem_c.matrix - problem_7D_expected)**2)/problem_7D_expected)
+first_result
+second_result = 2*sum(problem_c.matrix*log(problem_c.matrix/problem_7D_expected))
+second_result
+```
+
+Problem 7H
+```{r}
+sample_size_1 = 1000
+n=5
+problem_H_data = rbinom(sample_size_1,n,prob=0.4)
+problem_H_counts = (table(problem_H_data))
+phat_MLE = sum(problem_H_data)/(sample_size_1*n)
+exp_table = rep(1000*phat_MLE, 6)
+chisq_calc = sum(((problem_H_counts - exp_table)**2)/exp_table)
+1 - pchisq(chisq_calc, df = 5)
+```
+
+Problem 7I
+```{r}
+size_problem_I <- 2000
+X_s = c()
+Y_s = c()
+for (i in 1:size_problem_I)
+{
+  ith_sample <- rbinom(sample_size_1,n,prob=0.4)
+  ith_counts <- (table(ith_sample))
+  ith_phat_MLE <- (sum(ith_counts)/(sample_size_1*n))
+  ith_expected <- rep(1000*ith_phat_MLE, 6)
+  X <- 2*sum(ith_counts*log(ith_counts/ith_expected))
+  Y <- sum(((ith_counts - ith_expected)**2)/ith_expected)
+  X_s <- append(X_s, X)
+  Y_s <- append(Y_s, Y)
+}
+
+X_s <- data.frame(X_s)
+Y_s <- data.frame(Y_s)
+
+ggplot(X_s, aes(x=X_s)) + geom_histogram(aes(y=..density..), bins = 15) +
+  stat_function(fun = dchisq, args = list(df = 5), col='blue')  
+
+ggplot(Y_s, aes(x = Y_s)) + geom_histogram(aes(y=..density..), bins = 15) +
+  stat_function(fun = dchisq, args = list(df = 5), col='blue') 
