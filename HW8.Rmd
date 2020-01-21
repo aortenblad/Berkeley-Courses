@@ -1,0 +1,240 @@
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+```
+
+
+Problem 8A
+
+
+We conduct a test of Independence 
+Null:grade and major are independent 
+Alternative: grade and major are dependent 
+
+```{r}
+problem_8A_data <- matrix(c(8, 15, 13, 14, 19, 15, 15, 4, 7, 3, 1, 4),nrow=4,ncol=3,byrow = TRUE)
+chisq.test(problem_8A_data)$expected
+chisq.test(problem_8A_data)
+```
+
+The resulting p-value of 0.058 is greater than 0.05. Thus, cannot reject the null hypothesis at the 0.05 significance level. However, the results of the test are uncertain since the fourth assumptions of the test of independence is violated. Indeed, by observin the expected table, one can see that only 9/12 = 75% of the cells are greater than 5. Moreover, the third assumption is also violated, as students with high grades likely self-select into the statistics major.
+
+
+Problem 8B
+
+We conduct a test of Homogeneity between each drug and the placebo
+Null: The proportion of nausea and non-nausea are the same between users of the drug and the placebo.
+Alternative: The proportion of nausea and non-nausea between users of the drug and the placebo is different.
+```{r}
+problem_8B_data <- matrix(c(165, 95, 152, 52, 85, 52, 67, 35, 85, 37),nrow=5,ncol=2,byrow = TRUE)
+problem_8B_data <- data.frame(problem_8B_data)
+colnames(problem_8B_data) <- c("Number of Patients","Incidents of Nausea")
+rownames(problem_8B_data) <- c("Placebo", 'Chlorpromazine',"Dimenhydrinate", "Pentobarbital_100mg", 'Pentobarbital_150mg')
+
+Chlorpromazine_test <- chisq.test(problem_8B_data[c('Placebo','Chlorpromazine'), ])
+Dimenhydrinate_test <- chisq.test(problem_8B_data[c('Placebo','Dimenhydrinate'), ])
+Pentobarbital_100mg_test <- chisq.test(problem_8B_data[c('Placebo','Pentobarbital_100mg'), ])
+Pentobarbital_150mg_test <- chisq.test(problem_8B_data[c('Placebo','Pentobarbital_150mg'), ])
+
+Chlorpromazine_test
+Dimenhydrinate_test
+Pentobarbital_100mg_test
+Pentobarbital_150mg_test
+```
+
+The p-values of 0.01475 for Chlorpromazine is the only one which is less than 0.05 (the remaining values are 0.866,0.78320.2825 respectively). Thus, we only rejct the null hypothesis pertaing to Chlorpromazine.
+
+Problem 8C
+
+```{r}
+m <- 3
+n <- 2
+
+problem_8c_ranks <- c('(1,2,3)', '(1,2,4)', '(1,2,5)', '(1,3,4)', '(1,3,5)',
+                     '(1,4,5)', '(2,3,4)', '(2,3,5)', '(2,4,5)', '(3,4,5)')
+
+problem_8c_rank_sums <- c(6, 7, 8, 8, 9, 10, 9, 10, 11, 12)
+problem_8c_data <- data.frame(problem_8c_ranks, problem_8c_rank_sums)
+U_y <- data.frame(problem_8c_rank_sums - m*(n + 1)/2)
+
+ggplot(U_y) + geom_histogram(aes(x = U_y$problem_8c_rank_sums...m....n...1..2, y =..density..), bins=15) 
+```
+
+Problem 8D
+
+```{r}
+
+problem_8D_function <- function(){
+  a <- rnorm(1)
+  b <- rnorm(2, mean=1)
+  p <- prod(a<b)
+}
+
+vec <- replicate(10000, problem_8D_function())
+mean(vec)
+```
+
+
+Problem 8E
+
+part a)
+```{r}
+
+
+method_A <- c(79.98,80.04,80.02,80.04,80.03,80.03,80.04,79.97,80.05,80.03,80.02,80.00,80.02)
+method_B <- c(80.02,79.94,79.98,79.97,79.97,80.03,79.95,79.97) 
+combined <- c(79.98,80.04,80.02,80.04,80.03,80.03,80.04,79.97,80.05,80.03,80.02,80.00,80.02,80.02,79.94,79.98,79.97,79.97,80.03,79.95,79.97)
+original_mean_diff = mean(method_A) - mean(method_B)
+
+fun <- function(){
+  B <- sample(combined, 8)
+  A <- setdiff(combined, B)
+  mean_A <- mean(A)
+  mean_B <- mean(B)
+  mean_diff <- mean_A - mean_B
+  return(mean_diff)
+}
+
+all_samples <- replicate(1000, fun())
+
+ggplot(data.frame(all_samples)) +
+  geom_histogram(aes(x = all_samples, y =..density..), bins = 30) + 
+  geom_vline(xintercept = original_mean_diff, color = "red") 
+```
+
+The actually observed value of 0.042 is far to the right in the histogram, and hence larger than the vast majority of the theoretically-possible values. Thus, it seems unlikely that this value is a result of random sampling variation. Indeed, this agrees with the result of Example B of Section 11.2.1.
+
+part b)
+The Mann-Whitney test is also a non-parametric test.
+
+Problem 8F
+```{r}
+problem_8F_data <- matrix(c(22.8, 23.5, 10.2, 31.0, 20.8, 
+                            19.5, 27.0, 26.2, 19.2, 26.5, 
+                            9.0, 25.2, 14.2, 24.5, 19.8, 
+                            23.8, 14.5, 27.8, 14.8, 22.0), nrow=10,ncol=2,byrow = TRUE)
+
+problem_8F_df <- data.frame(problem_8F_data)
+colnames(problem_8F_df) <- c("Field Present","Field Absent")
+problem_8F_plot <- gather(problem_8F_df, key = Treatment, value = Weight_gain) 
+
+
+ggplot(problem_8F_plot, aes(x = Weight_gain, fill = Treatment)) + 
+  geom_dotplot() + 
+  facet_grid(Treatment~.) + 
+  scale_y_continuous(NULL, breaks = NULL) +xlab("Weight Gains") + 
+  scale_y_continuous(NULL, breaks = NULL) +xlab("Weight Gains")
+```
+
+Problem 8G
+
+Part b)
+The data is not paired because there is no correlation between samples. The two samples are likely independent given the randomized experimental design.
+For the parametric test, must also assume that the distribution is close to normal. The qq plots below suggest that this assumption is reasonable. 
+
+```{r}
+
+ggplot(problem_8F_df, aes(sample=problem_8F_df$`Field Present`)) + stat_qq(size = 3)
+ggplot(problem_8F_df, aes(sample=problem_8F_df$`Field Absent`)) + stat_qq(size = 3)
+problem_8G_test <- t.test(problem_8F_df$`Field Present`, problem_8F_df$`Field Absent`)
+problem_8G_test$conf.int
+```
+
+Part c)
+Null: There is no difference in the population means of the two samples.
+Alternate: There is a difference between the two populations means of the two samples.
+
+```{r}
+problem_8G_test
+```
+
+We find that the p-value of 0.001995 is less than 0.05. We reject the null hypothesis at the 0.05 significance level
+
+Problem 8H
+We use the Mann-Whitney test. We mujst assume that the samples are independent. 
+Null: There is no difference in the population distribution of the two samples.
+Alternate: There is a difference between the  populations distribution  of the two samples.
+
+```{r}
+wilcox.test(problem_8F_df$`Field Present`, problem_8F_df$`Field Absent`)
+```
+
+We find that the p-value of 0.002879 is less than 0.05. We reject the null hypothesis at the 0.05 significance level.
+
+Problem 8I
+```{r}
+problem_8I_data <- read.table("C:/Users/aleor/OneDrive/Documents/Berkeley/Stat 135/bodytemp.txt", header = TRUE)
+head(problem_8I_data)
+#part a)
+body_temp_male <- problem_8I_data[problem_8I_data$gender== 1,]$temperature
+body_temp_female <- problem_8I_data[problem_8I_data$gender== 2,]$temperature
+
+body_temp <- data.frame(body_temp_male,body_temp_female)
+head(body_temp)
+
+std_error <- ((64*var(body_temp_male) + 64*var(body_temp_female))/128)**.5
+
+diference <- mean(body_temp_male) - mean(body_temp_female)
+CI <- c(diference + std_error*qnorm(0.025), upper_lim <- diference - std_error*qnorm(0.025))
+CI
+```
+
+The normal approximation seems appropriate since n is large and approxiamtely normal, according to the qq plots below.
+
+```{r}
+ggplot(body_temp, aes(sample=body_temp_male)) + stat_qq(size = 3) 
+ggplot(body_temp, aes(sample=body_temp_female)) + stat_qq(size = 3) 
+```
+
+Part b)
+```{r}
+heart_rate_male <- problem_8I_data[problem_8I_data$gender== 1,]$rate
+heart_rate_female <- problem_8I_data[problem_8I_data$gender== 2,]$rate
+std_error_heart <- ((64*var(heart_rate_male) + 64*var(heart_rate_female))/128)**.5
+difference <- mean(heart_rate_male) - mean(heart_rate_female)
+CI_heart_rate = c(difference + std_error_heart*qnorm(0.025), difference - std_error_heart*qnorm(0.025))
+CI_heart_rate
+```
+
+The normal approximation seems seasonable since the sample size is large and approxiamtely normal, as per the previous part of the question. 
+
+Part c)
+
+Null: Male and female have the same body temperature/heart rate.
+Alternate: Male and femle have different body temperature/heart rate.
+
+Parametric Test:
+
+We assume the sample is random and independent.
+
+```{r}
+t.test(body_temp_male, body_temp_female)
+```
+
+The p-value of 0.02394 is less than 0.05. Hence, we reject the null hypothesis at the 0.05 significance level.
+
+```{r}
+t.test(heart_rate_male, heart_rate_female)
+```
+
+The p-value of 0.5287 is greater than 0.05. Hence, we fail to reject the null hypothesis at the 0.05 significance level.
+
+Nonparametric Test:
+The assumptions are the same as before.
+
+```{r}
+wilcox.test(body_temp_male, body_temp_female, correct = FALSE)
+```
+
+The p-value of 0.02394 is less than 0.05. Hence, we reject the null hypothesis at the 0.05 significance level.
+
+```{r}
+wilcox.test(heart_rate_male, heart_rate_female, correct = FALSE)
+```
+
+The p-value of 0.3885 is greater than 0.05. Hence, we fail to reject the null hypothesis at the 0.05 significance level.
+
+
+
